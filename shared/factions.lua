@@ -37,6 +37,19 @@ Config.Drugs = {
         maxSupply   = 500,
         pricePerUnit = 15,
     },
+    weed = {
+        label       = 'Weed',
+        unit        = 'lb',
+        maxSupply   = 500,   -- 500 pounds per supplier per spawn cycle
+        pricePerUnit = 800,  -- $ per lb (wholesale)
+    },
+    pills = {
+        label       = 'Pills',
+        unit        = 'bottle',
+        bottleSize  = 120,   -- 120 pills per bottle
+        maxSupply   = 500,   -- 500 bottles per supplier per spawn cycle
+        pricePerUnit = 600,  -- $ per bottle (wholesale)
+    },
 }
 
 -- ---------------------------------------------------------------------------
@@ -57,7 +70,7 @@ Config.Factions = {
         name        = 'Cartel del Norte',
         type        = 'cartel',
         canSupply   = true,
-        drugs       = { 'cocaine', 'heroin', 'meth', 'lean' },
+        drugs       = { 'cocaine', 'heroin', 'meth', 'lean', 'weed', 'pills' },
         blipSprite  = 84,
         blipColor   = 1,   -- red
         spawnLocations = {
@@ -71,7 +84,7 @@ Config.Factions = {
         name        = 'Cartel del Sur',
         type        = 'cartel',
         canSupply   = true,
-        drugs       = { 'cocaine', 'heroin', 'lean' },
+        drugs       = { 'cocaine', 'heroin', 'lean', 'weed', 'pills' },
         blipSprite  = 84,
         blipColor   = 1,
         spawnLocations = {
@@ -87,7 +100,7 @@ Config.Factions = {
         name        = 'East Side Mafia',
         type        = 'mafia',
         canSupply   = true,
-        drugs       = { 'cocaine', 'heroin' },
+        drugs       = { 'cocaine', 'heroin', 'pills' },
         blipSprite  = 84,
         blipColor   = 4,   -- blue
         spawnLocations = {
@@ -101,7 +114,7 @@ Config.Factions = {
         name        = 'Westside Outfit',
         type        = 'mafia',
         canSupply   = true,
-        drugs       = { 'cocaine', 'meth' },
+        drugs       = { 'cocaine', 'meth', 'weed', 'pills' },
         blipSprite  = 84,
         blipColor   = 4,
         spawnLocations = {

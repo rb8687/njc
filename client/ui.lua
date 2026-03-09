@@ -47,11 +47,12 @@ local function buildMenuItems(faction, supply)
         if drug then
             local stock = supply[drugKey] or 0
             table.insert(items, {
-                drugKey  = drugKey,
-                label    = drug.label,
-                unit     = drug.unit,
-                stock    = stock,
-                price    = drug.pricePerUnit,
+                drugKey    = drugKey,
+                label      = drug.label,
+                unit       = drug.unit,
+                bottleSize = drug.bottleSize,  -- non-nil for pills
+                stock      = stock,
+                price      = drug.pricePerUnit,
             })
         end
     end
@@ -90,9 +91,14 @@ function OpenSupplyMenu(faction, supply)
                 local prefix  = (i == menuSelected) and '► ' or '  '
                 local stockTxt = (item.stock <= 0) and '~r~OUT OF STOCK' or
                     ('Stock: ~b~%d %s'):format(item.stock, item.unit)
+                -- For bottled items show how many units are in each bottle
+                local extraInfo = ''
+                if item.bottleSize then
+                    extraInfo = ('  (~y~%d/bottle~w~)'):format(item.bottleSize)
+                end
                 DrawText2D(0.5, yPos,
-                    ('%s%s%s  $%s/%s  |  %s'):format(
-                        prefix, color, item.label,
+                    ('%s%s%s%s  $%s/%s  |  %s'):format(
+                        prefix, color, item.label, extraInfo,
                         FormatMoney(item.price), item.unit,
                         stockTxt))
             end
