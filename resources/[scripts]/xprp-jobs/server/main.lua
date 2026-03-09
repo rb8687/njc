@@ -47,11 +47,11 @@ Citizen.CreateThread(function()
         for src, player in pairs(players) do
             local gradeData = getJobGrade(player.job.name, player.job.grade)
             if gradeData and gradeData.salary > 0 then
-                player.bank = (player.bank or 0) + gradeData.salary
                 MySQL.query.await(
-                    'UPDATE xprp_characters SET bank = ? WHERE id = ?',
-                    { player.bank, player.charId }
+                    'UPDATE xprp_characters SET bank = bank + ? WHERE id = ?',
+                    { gradeData.salary, player.charId }
                 )
+                player.bank = (player.bank or 0) + gradeData.salary
                 TriggerClientEvent('xprp:notify', src,
                     ('Salary paid: $%d'):format(gradeData.salary), 'success')
             end

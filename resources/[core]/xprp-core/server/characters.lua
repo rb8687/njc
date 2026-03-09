@@ -56,8 +56,8 @@ RegisterNetEvent('xprp:createCharacter', function(data)
 
     MySQL.insert.await(
         [[INSERT INTO xprp_characters
-          (account_id, firstname, lastname, dob, gender, cash, bank, job, job_grade, created_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, 'unemployed', 0, NOW())]],
+          (account_id, firstname, lastname, dob, gender, cash, bank, job, job_grade, faction, faction_grade, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, 'unemployed', 0, 'none', 0, NOW())]],
         {
             accountId,
             data.firstname,
