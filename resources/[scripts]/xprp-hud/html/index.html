@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NJC xprp HUD</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <div id="hud" class="hidden">
+        <!-- Health -->
+        <div class="stat" id="health-stat">
+            <span class="icon">❤️</span>
+            <div class="bar-wrap">
+                <div class="bar" id="health-bar"></div>
+            </div>
+            <span class="val" id="health-val">100</span>
+        </div>
+
+        <!-- Armour -->
+        <div class="stat" id="armour-stat">
+            <span class="icon">🛡️</span>
+            <div class="bar-wrap">
+                <div class="bar" id="armour-bar"></div>
+            </div>
+            <span class="val" id="armour-val">0</span>
+        </div>
+
+        <!-- Money -->
+        <div class="money-block">
+            <div class="money-row">
+                <span class="icon">💵</span>
+                <span id="cash-val">$0</span>
+            </div>
+            <div class="money-row">
+                <span class="icon">🏦</span>
+                <span id="bank-val">$0</span>
+            </div>
+        </div>
+
+        <!-- Job -->
+        <div class="job-block">
+            <span class="icon">💼</span>
+            <span id="job-val">Unemployed</span>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
