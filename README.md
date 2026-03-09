@@ -1,7 +1,7 @@
 # NJC xprp – FiveM Roleplay Server
 
 A **FiveM xprp** (experience roleplay) server where players earn **XP and cash** for
-play time and clean gameplay.
+play time on the server.
 
 ---
 
@@ -10,41 +10,45 @@ play time and clean gameplay.
 | Feature | Resource |
 |---|---|
 | Player accounts & character loading | `xprp-core` |
-| XP + cash rewards for play time | `xprp-playtime` |
-| Clean-gameplay bonus (infraction-free session) | `xprp-playtime` |
+| One-time XP + cash reward for reaching playtime threshold | `xprp-playtime` |
+| Faction-member shorter threshold (45 min vs 60 min) | `xprp-playtime` |
 | Freeze/unfreeze player on connect | `spawnmanager` |
 
 ---
 
 ## XP & Cash Reward System (`xprp-playtime`)
 
-Players accumulate XP and cash while they are connected and have a character loaded.
+Players receive a **one-time reward per session** once they have been connected
+and have a character loaded for their required threshold.
 
-### How it works
+### Thresholds and reward
 
-| Trigger | Reward |
-|---|---|
-| Every **5 minutes** of playtime | **+50 XP**, **+$250 cash** |
-| Clean session (≥10 min, no infractions) | Additional **+25 XP**, **+$125 cash** per interval |
+| Player type | Required playtime | Reward |
+|---|---|---|
+| Regular player | **60 minutes** | **+25 XP**, **+$10,000 cash** |
+| Faction member | **45 minutes** | **+25 XP**, **+$10,000 cash** |
 
-All values are configurable in  
-`resources/[scripts]/xprp-playtime/shared/config.lua`.
+The reward is paid out exactly once per login session.  
+If a player disconnects before reaching the threshold, the clock resets on
+their next session.
 
-### Clean gameplay
+### Faction membership
 
-A session is considered *clean* until an admin (or another resource) fires the
-`xprp:playtime:recordInfraction` server event:
+A player is treated as a faction member when their active character's job
+matches one of the jobs listed in `PlaytimeConfig.FactionJobs`.  
+Default faction jobs: `police`, `mechanic`.  
+Add any job name to the list to give it the shorter threshold.
+
+### Tuning rewards
+
+Edit `resources/[scripts]/xprp-playtime/shared/config.lua`:
 
 ```lua
--- From any server-side script
-TriggerEvent('xprp:playtime:recordInfraction', targetSrc, 'rule violation')
-```
-
-Admins can also flag a player from the client with the ACE-protected net-event:
-
-```lua
--- From a client-side admin script
-TriggerServerEvent('xprp:playtime:adminInfraction', targetSrc, 'reason')
+PlaytimeConfig.RewardMinutes        = 60      -- threshold for regular players (minutes)
+PlaytimeConfig.FactionRewardMinutes = 45      -- threshold for faction members (minutes)
+PlaytimeConfig.RewardCash           = 10000   -- cash reward
+PlaytimeConfig.RewardXp             = 25      -- XP reward
+PlaytimeConfig.FactionJobs          = { 'police', 'mechanic' }
 ```
 
 ---
@@ -65,16 +69,3 @@ TriggerServerEvent('xprp:playtime:adminInfraction', targetSrc, 'reason')
    - Set `sv_licenseKey` (from [keymaster.fivem.net](https://keymaster.fivem.net/))
    - Set `mysql_connection_string` with your DB credentials
 4. Start the server.
-
-### Tuning rewards
-
-Edit `resources/[scripts]/xprp-playtime/shared/config.lua`:
-
-```lua
-PlaytimeConfig.IntervalMinutes    = 5    -- how often rewards are paid out
-PlaytimeConfig.BaseXp             = 50   -- XP per interval
-PlaytimeConfig.BaseCash           = 250  -- cash per interval
-PlaytimeConfig.CleanBonusXp       = 25   -- bonus XP for clean gameplay
-PlaytimeConfig.CleanBonusCash     = 125  -- bonus cash for clean gameplay
-PlaytimeConfig.CleanMinimumMinutes = 10  -- min session minutes before bonus kicks in
-```

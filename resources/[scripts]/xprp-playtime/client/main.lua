@@ -2,27 +2,28 @@
 -- xprp-playtime | Client – Reward Notifications
 -- =============================================================================
 
--- Displayed when the server grants a periodic playtime reward.
+-- Displayed when the server grants the playtime milestone reward.
 RegisterNetEvent('xprp:playtime:reward', function(data)
-    local line1, line2
+    -- Line 1: reward amounts
+    local line1 = ('~g~Play-time reward: ~w~+%d XP   +$%d'):format(
+        data.xp,
+        data.cash
+    )
 
-    if data.isClean then
-        line1 = ('~g~Play-time reward: ~w~+%d XP   +$%d'):format(data.xp, data.cash)
-        line2 = '~b~Clean gameplay bonus included!'
+    -- Line 2: context (faction or regular threshold reached)
+    local line2
+    if data.isFaction then
+        line2 = ('~b~Faction member reward – %d min threshold reached!'):format(data.threshold)
     else
-        line1 = ('~y~Play-time reward: ~w~+%d XP   +$%d'):format(data.xp, data.cash)
-        line2 = nil
+        line2 = ('~y~%d min play-time threshold reached!'):format(data.threshold)
     end
 
-    -- Show a big-message feed notification
     BeginTextCommandThefeedPost('STRING')
     AddTextComponentSubstringPlayerName(line1)
     EndTextCommandThefeedPostTicker(false, true)
 
-    if line2 then
-        Citizen.Wait(PlaytimeConfig.NotificationDelayMs)
-        BeginTextCommandThefeedPost('STRING')
-        AddTextComponentSubstringPlayerName(line2)
-        EndTextCommandThefeedPostTicker(false, true)
-    end
+    Citizen.Wait(PlaytimeConfig.NotificationDelayMs)
+    BeginTextCommandThefeedPost('STRING')
+    AddTextComponentSubstringPlayerName(line2)
+    EndTextCommandThefeedPostTicker(false, true)
 end)

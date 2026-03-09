@@ -4,21 +4,22 @@
 
 PlaytimeConfig = {}
 
--- ── Interval ──────────────────────────────────────────────────────────────────
--- How often (in minutes) XP and cash are awarded for being online.
-PlaytimeConfig.IntervalMinutes = 5
+-- ── Milestone thresholds ───────────────────────────────────────────────────────
+-- Minutes of continuous play required to earn the one-time session reward.
+PlaytimeConfig.RewardMinutes        = 60   -- regular players
+PlaytimeConfig.FactionRewardMinutes = 45   -- faction members (shorter threshold)
 
--- ── Base rewards (every interval) ────────────────────────────────────────────
-PlaytimeConfig.BaseXp   = 50   -- XP per interval
-PlaytimeConfig.BaseCash = 250  -- Cash per interval
+-- ── Reward values (awarded once per session on reaching the threshold) ─────────
+PlaytimeConfig.RewardCash = 10000
+PlaytimeConfig.RewardXp   = 25
 
--- ── Clean gameplay bonus ──────────────────────────────────────────────────────
--- Awarded on top of the base when no infractions are recorded this session.
-PlaytimeConfig.CleanBonusXp   = 25   -- extra XP per interval for clean play
-PlaytimeConfig.CleanBonusCash = 125  -- extra cash per interval for clean play
-
--- Minimum minutes a player must have been online before the clean bonus applies.
-PlaytimeConfig.CleanMinimumMinutes = 10
+-- ── Faction jobs ───────────────────────────────────────────────────────────────
+-- Players whose character job matches one of these names are treated as faction
+-- members and benefit from the shorter FactionRewardMinutes threshold.
+PlaytimeConfig.FactionJobs = {
+    'police',
+    'mechanic',
+}
 
 -- Delay (ms) between the two reward notification lines shown on the client.
 PlaytimeConfig.NotificationDelayMs = 500

@@ -81,6 +81,7 @@ RegisterNetEvent('xprp:playerLoaded', function(charId)
         bank         = char.bank          or Config.StartingMoney.bank,
         xp           = char.xp            or 0,
         playtimeSecs = char.playtime_secs or 0,
+        job          = char.job           or 'unemployed',
     }
 
     TriggerClientEvent('xprp:playerReady', src, xprp.Players[src])

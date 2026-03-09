@@ -1,15 +1,35 @@
 -- =============================================================================
 -- xprp-playtime | Server – XP & Cash Rewards
 --
--- Awards players XP and cash at regular intervals for:
---   • Being connected and having a character loaded  (base reward)
---   • Clean gameplay – no infractions recorded this session (bonus reward)
+-- Awards players a one-time session reward when they reach their playtime
+-- threshold:
+--   • Regular players  – 60 minutes
+--   • Faction members  – 45 minutes
+-- Reward: $10,000 cash + 25 XP (configurable in shared/config.lua)
 -- =============================================================================
 
 -- Session table: keyed by player server ID.
--- Each entry tracks when the player loaded their character and whether
--- any infraction has been flagged against them this session.
+-- Each entry tracks when the player loaded their character and whether the
+-- session reward has already been paid out.
 local Sessions = {}
+
+-- ── Helpers ───────────────────────────────────────────────────────────────────
+
+-- Build a fast lookup set from the FactionJobs list.
+local factionJobSet = {}
+for _, jobName in ipairs(PlaytimeConfig.FactionJobs) do
+    factionJobSet[jobName] = true
+end
+
+--- Return the required playtime threshold (minutes) for this player.
+--- @param player table  in-memory player object from xprp-core
+--- @return number
+local function getThreshold(player)
+    if factionJobSet[player.job] then
+        return PlaytimeConfig.FactionRewardMinutes
+    end
+    return PlaytimeConfig.RewardMinutes
+end
 
 -- ── Session lifecycle ─────────────────────────────────────────────────────────
 
@@ -18,7 +38,7 @@ AddEventHandler('xprp:playerLoaded', function(src, player)
     Sessions[src] = {
         loadTime = os.time(),  -- wall-clock seconds when session started
         charId   = player.charId,
-        clean    = true,       -- innocent until an infraction is recorded
+        rewarded = false,      -- true once the milestone reward has been paid
     }
     xprp_log(('Playtime session started for src %d (char %d)'):format(src, player.charId))
 end)
@@ -38,84 +58,63 @@ AddEventHandler('xprp:playerDropped', function(src, player)
     xprp_log(('Playtime session ended for src %d (+%ds)'):format(src, elapsed))
 end)
 
--- ── Infraction recording ──────────────────────────────────────────────────────
+-- ── Milestone reward loop ─────────────────────────────────────────────────────
 
---- Record an infraction against a player, removing their clean-play bonus.
---- Any server-side admin or resource may call this via TriggerEvent.
---- @param targetSrc  number  server ID of the offending player
---- @param reason     string  human-readable reason (logged only)
-AddEventHandler('xprp:playtime:recordInfraction', function(targetSrc, reason)
-    local session = Sessions[targetSrc]
-    if session and session.clean then
-        session.clean = false
-        xprp_log(('Infraction recorded for src %d: %s'):format(targetSrc, tostring(reason)))
-        TriggerClientEvent('xprp:notify', targetSrc,
-            'An infraction has been recorded against you. Clean-play bonus removed for this session.',
-            'error')
-    end
-end)
-
---- Net-event wrapper so admins can flag a player from the client side.
-RegisterNetEvent('xprp:playtime:adminInfraction', function(targetSrc, reason)
-    local src = source
-    if not IsPlayerAceAllowed(src, 'command') then
-        TriggerClientEvent('xprp:notify', src, 'No permission.', 'error')
-        return
-    end
-    TriggerEvent('xprp:playtime:recordInfraction', targetSrc, reason or 'admin flag')
-end)
-
--- ── Periodic reward loop ──────────────────────────────────────────────────────
+-- Poll every 60 seconds to keep CPU usage minimal.
+local POLL_INTERVAL_MS = 60 * 1000
 
 Citizen.CreateThread(function()
     while true do
-        Citizen.Wait(PlaytimeConfig.IntervalMinutes * 60 * 1000)
+        Citizen.Wait(POLL_INTERVAL_MS)
 
         for src, session in pairs(Sessions) do
-            local player = exports['xprp-core']:getPlayer(src)
-            if not player then
-                -- Player must have disconnected without the drop event firing; clean up.
-                Sessions[src] = nil
-            else
-                local elapsedMinutes = (os.time() - session.loadTime) / 60
-
-                -- Calculate rewards
-                local xpGain   = PlaytimeConfig.BaseXp
-                local cashGain = PlaytimeConfig.BaseCash
-                local gotClean = false
-
-                if session.clean and elapsedMinutes >= PlaytimeConfig.CleanMinimumMinutes then
-                    xpGain   = xpGain   + PlaytimeConfig.CleanBonusXp
-                    cashGain = cashGain + PlaytimeConfig.CleanBonusCash
-                    gotClean = true
-                end
-
-                -- Persist to DB; roll back in-memory changes if this fails.
-                local ok, err = pcall(function()
-                    MySQL.query.await(
-                        'UPDATE xprp_characters SET xp = xp + ?, cash = cash + ? WHERE id = ?',
-                        { xpGain, cashGain, player.charId }
-                    )
-                end)
-
-                if not ok then
-                    xprp_log(('DB update failed for src %d: %s'):format(src, tostring(err)), 'error')
+            -- Skip players who already received their reward this session.
+            if not session.rewarded then
+                local player = exports['xprp-core']:getPlayer(src)
+                if not player then
+                    -- Player disconnected without the drop event firing; clean up.
+                    Sessions[src] = nil
                 else
-                    -- Update in-memory player table so other resources see current values
-                    player.xp   = (player.xp   or 0) + xpGain
-                    player.cash = (player.cash or 0) + cashGain
+                    local elapsedMinutes = (os.time() - session.loadTime) / 60
+                    local threshold      = getThreshold(player)
 
-                    -- Tell the client so it can display a notification
-                    TriggerClientEvent('xprp:playtime:reward', src, {
-                        xp        = xpGain,
-                        cash      = cashGain,
-                        isClean   = gotClean,
-                        totalXp   = player.xp,
-                        totalCash = player.cash,
-                    })
+                    if elapsedMinutes >= threshold then
+                        -- Mark as rewarded immediately to prevent double-payout.
+                        session.rewarded = true
 
-                    xprp_log(('Reward for src %d: +%d XP, +$%d cash (clean=%s)'):format(
-                        src, xpGain, cashGain, tostring(gotClean)))
+                        local xpGain   = PlaytimeConfig.RewardXp
+                        local cashGain = PlaytimeConfig.RewardCash
+
+                        -- Persist to DB; revert in-memory state on failure.
+                        local ok, err = pcall(function()
+                            MySQL.query.await(
+                                'UPDATE xprp_characters SET xp = xp + ?, cash = cash + ? WHERE id = ?',
+                                { xpGain, cashGain, player.charId }
+                            )
+                        end)
+
+                        if not ok then
+                            session.rewarded = false  -- allow retry next poll
+                            xprp_log(('DB update failed for src %d: %s'):format(src, tostring(err)), 'error')
+                        else
+                            -- Update in-memory player table.
+                            player.xp   = (player.xp   or 0) + xpGain
+                            player.cash = (player.cash or 0) + cashGain
+
+                            local isFaction = factionJobSet[player.job] == true
+                            TriggerClientEvent('xprp:playtime:reward', src, {
+                                xp         = xpGain,
+                                cash       = cashGain,
+                                isFaction  = isFaction,
+                                threshold  = threshold,
+                                totalXp    = player.xp,
+                                totalCash  = player.cash,
+                            })
+
+                            xprp_log(('Milestone reward for src %d: +%d XP, +$%d cash (faction=%s, threshold=%dmin)'):format(
+                                src, xpGain, cashGain, tostring(isFaction), threshold))
+                        end
+                    end
                 end
             end
         end
