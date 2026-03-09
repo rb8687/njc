@@ -72,15 +72,16 @@ RegisterNetEvent('xprp:playerLoaded', function(charId)
     end
 
     xprp.Players[src] = {
-        source       = src,
-        license      = license,
-        accountId    = accountId,
-        charId       = char.id,
-        name         = char.firstname .. ' ' .. char.lastname,
-        job          = { name = char.job or 'unemployed', grade = char.job_grade or 0 },
-        faction      = { name = char.faction or 'none',   grade = char.faction_grade or 0 },
-        cash         = char.cash  or Config.StartingMoney.cash,
-        bank         = char.bank  or Config.StartingMoney.bank,
+        source          = src,
+        license         = license,
+        accountId       = accountId,
+        charId          = char.id,
+        name            = char.firstname .. ' ' .. char.lastname,
+        job             = { name = char.job or 'unemployed', grade = char.job_grade or 0 },
+        faction         = { name = char.faction or 'none',   grade = char.faction_grade or 0 },
+        criminalFaction = { id   = char.criminal_faction_id, grade = char.criminal_faction_grade },
+        cash            = char.cash  or Config.StartingMoney.cash,
+        bank            = char.bank  or Config.StartingMoney.bank,
     }
 
     TriggerClientEvent('xprp:playerReady', src, xprp.Players[src])

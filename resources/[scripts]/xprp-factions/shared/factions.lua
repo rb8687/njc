@@ -171,3 +171,68 @@ function isStateFaction(factionName)
     local faction = Factions[factionName]
     return faction ~= nil and faction.type == FactionType.STATE
 end
+
+-- =============================================================================
+-- Criminal Factions – player-created (gang, cartel, mafia, motorcycle_club)
+-- =============================================================================
+
+-- Grade labels per criminal faction type (index 4 is always the Leader/founder).
+CriminalFactionTypes = {
+    gang = {
+        label  = 'Gang',
+        grades = {
+            [0] = 'Recruit',
+            [1] = 'Gangster',
+            [2] = 'Shotcaller',
+            [3] = 'OG',
+            [4] = 'Boss',
+        },
+    },
+    cartel = {
+        label  = 'Cartel',
+        grades = {
+            [0] = 'Runner',
+            [1] = 'Soldier',
+            [2] = 'Enforcer',
+            [3] = 'Underboss',
+            [4] = 'Boss',
+        },
+    },
+    mafia = {
+        label  = 'Mafia',
+        grades = {
+            [0] = 'Associate',
+            [1] = 'Soldier',
+            [2] = 'Capo',
+            [3] = 'Underboss',
+            [4] = 'Don',
+        },
+    },
+    motorcycle_club = {
+        label  = 'Motorcycle Club',
+        grades = {
+            [0] = 'Hang-Around',
+            [1] = 'Prospect',
+            [2] = 'Member',
+            [3] = 'Sergeant-at-Arms',
+            [4] = 'President',
+        },
+    },
+}
+
+-- Configuration for player-created criminal factions.
+CriminalFactionConfig = {
+    creationCost = 1000000,  -- amount deducted from the founding player's bank balance
+    maxMembers   = 45,       -- hard cap on total members per faction
+    leaderGrade  = 4,        -- grade index assigned to the founding player
+}
+
+--- Return the grade label string for a criminal faction type and grade.
+--- @param factionType string  (gang | cartel | mafia | motorcycle_club)
+--- @param grade       number
+--- @return string|nil
+function getCriminalFactionGradeLabel(factionType, grade)
+    local t = CriminalFactionTypes[factionType]
+    if not t then return nil end
+    return t.grades[grade]
+end
